@@ -31,7 +31,7 @@
 #ifndef __ADLIST_H__
 #define __ADLIST_H__
 
-/** Add by wgy
+/** --Add by wgy
  *  上面两行 code 为 宏定义，目的是为了进行条件编译。
  *  一般情况下，源程序中所有的行都参加编译。但是有时希望对其中一部分内容只在满足一定条件才进行编译，
  *  也就是对一部分内容指定编译的条件，这就是“条件编译”。
@@ -63,23 +63,31 @@
 
 
 /* Node, List, and Iterator are the only data structures used currently. */
-
+/* Iterator 迭代器  --Add by wgy，通俗来说就是循环，每一次叫做一次迭代
+ *                    迭代器（iterator）有时又称游标（cursor）是一个很典型的设计模式，它总是用同一种逻辑来遍历集合（数组、链表等），
+ *                    无需关心集合的内部实现
+ */
+ 
 /*
  * 双端链表节点
- * 双向链表  Add by wgy
+ * 双向链表  --Add by wgy
  */
 typedef struct listNode {
 
-    // 前置节点 (节点的前一节点 Add by wgy)
+    // 前置节点 (节点的前一节点 --Add by wgy)
     struct listNode *prev;
 
-    // 后置节点 (节点的前一节点 Add by wgy)
+    // 后置节点 (节点的前一节点 --Add by wgy)
     struct listNode *next;
 
     // 节点的值
     void *value;
 
 } listNode;
+
+/*  C中定义一个结构体类型用typedef后，在声明变量的时候就可：listNode listXX;（最后那个listNode）(如果没有typedef就必须用struct listNode listXX;来声明)
+ *  这里的listNode（最后那个listNode）实际上就是struct listNode的别名。listNode==struct listNode，另外第一个listNode不是必须的（ 但省略后就只能使用listNode listXX;来定义变量）
+ */
 
 /*
  * 双端链表迭代器
