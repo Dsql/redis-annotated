@@ -76,27 +76,52 @@ typedef struct listNode {
 
     // 前置节点 (节点的前一节点 --Add by wgy)
     struct listNode *prev;
-
+    /* 指针可以指向一个结构体，定义的形式一般为：struct 结构体名 *变量名;
+     * 
+     * 结构体和结构体变量是两个不同的概念：结构体是一种数据类型，是一种创建变量的模板，编译器不会为它分配内存空间，就像 int、float、char 这些关键字本身不占用内存一样；
+     * 结构体变量才包含实实在在的数据，才需要内存来存储。不可能去取一个结构体名的地址，也不能将它赋值给其他变量
+     *
+     * 通过结构体指针可以获取结构体成员，一般形式为：
+     * (*pointer).memberName  // .的优先级高于*，(*pointer)两边的括号不能少
+     * 或者：
+     * pointer->memberName
+     * 上面的两种写法是等效的，我们通常采用后面的写法，这样更加直观。
+     */
     // 后置节点 (节点的前一节点 --Add by wgy)
     struct listNode *next;
 
     // 节点的值
     void *value;
-
+    /* void 类型指针，无类型指针，可以指向任何类型的数据，即可以被赋予任何类型的指针，如 
+     * void *p1;  
+     * int *p2;    float b = 11.22;          char *c = "abc";
+     * p1 = p2;    p1 = &b;                  p = c;         
+     */
+    //数组名在表达式中会被转换为数组指针，而结构体变量名不会，无论在任何表达式中它表示的都是整个集合本身，要想取得结构体变量的地址，必须在前面加&
 } listNode;
 
-/*  C中定义一个结构体类型用typedef后，在声明变量的时候就可：listNode listXX;（最后那个listNode）(如果没有typedef就必须用struct listNode listXX;来声明)
- *  这里的listNode（最后那个listNode）实际上就是struct listNode的别名。listNode==struct listNode，另外第一个listNode不是必须的（ 但省略后就只能使用listNode listXX;来定义变量）
- */
+//  结构体也是一种数据类型，它由程序员自己定义，可以包含多个其他类型的数据(可以包含多个基本类型的数据，也可以包含其他的结构体)。 
+//  结构体内的成员不能初始化
+//  结构体是一种自定义的数据类型，是创建变量的模板，不占用内存空间；结构体变量才包含了实实在在的数据，需要内存空间来存储。
 
+/*  C中定义一个结构体类型用typedef后，在声明变量的时候就可：listNode listXX;（此listNode是最后那个listNode）
+ *  (如果没有typedef就必须用struct listNode listXX;来声明)
+ *  这里的listNode（最后那个listNode）实际上就是struct listNode的别名。listNode==struct listNode，
+ *  另外第一个listNode不是必须的（ 但省略后就只能使用listNode listXX;来定义变量）
+ */
+/* 结构体变量名代表的是整个集合本身，作为函数参数时传递的整个集合，也就是所有成员，
+ * 而不是像数组一样被编译器转换成一个指针。如果结构体成员较多，尤其是成员为数组时，传送的时间和空间开销会很大，影响程序的运行效率。
+ * 所以最好的办法就是使用结构体指针，这时由实参传向形参的只是一个地址，非常快速
+ */
 /*
  * 双端链表迭代器
+ * list迭代器，只能单向
  */
 typedef struct listIter {
 
-    // 当前迭代到的节点
+    // 当前迭代到的节点(当前迭代位置的下一个节点)
     listNode *next;
-
+    
     // 迭代的方向
     int direction;
 
@@ -122,15 +147,40 @@ typedef struct list {
     // 节点值对比函数
     int (*match)(void *ptr, void *key);
 
-    // 链表所包含的节点数量
+    // 链表所包含的节点数量(列表常读)
     unsigned long len;
 
 } list;
 
+// 宏定义的一些基本操作
 /* Functions implemented as macros */
 // 返回给定链表所包含的节点数量
 // T = O(1)
 #define listLength(l) ((l)->len)
+/*
+ *带参宏定义的一般形式为：
+ * #define 宏名(形参列表) 字符串
+ * 在字符串中含有各个形参。对带参数的宏，在调用中，不仅要宏展开，而且要用实参去代换形参。
+ * e.g.     #define M(y) y*y+3*y  //宏定义
+ *          // Code                    
+ *          k=M(5);  //宏调用             
+ *      在宏调用时，用实参5去代替形参y，经预处理宏展开后的语句为k=5*5+3*5。
+ *  1) 带参宏定义中，形参之间可以出现空格，但是宏名和形参列表之间不能有空格出现。例如把：
+ *  2) 在带参宏定义中，不会为形式参数分配内存，因此不必指明数据类型。而在宏调用中，实参包含了具体的数据，要用它们去代换形参，因此必须指明数据类型。
+ *  3) 在宏定义中，字符串内的形参通常要用括号括起来以避免出错。这是由于替换只作符号替换而不作其它处理。
+ *      如 #define SQ(y) y*y ， sq = SQ(a+1) 替换后为 sq=a+1*a+1; 与期望的 sq=(a+1)*(a+1); 不一样
+ *      因此宏定义要写为 #define SQ(y) (y)*(y)
+ *      如果code中 sq = 200 / SQ(a+1); 就算形参已扩起来 #define SQ(y) (y)*(y) ，但替换后
+ *      出来的结果为 sq=200/(a+1)*(a+1); 等于200与期望的结果为2不一致。
+ *      由此可见，对于带参宏定义不仅要在参数两侧加括号，还应该在整个字符串外加括号。
+ *      如 #define SQ(y) ((y)*(y))
+ *
+ *   带参数的宏和函数很相似，但有本质上的区别：宏展开仅仅是字符串的替换，不会对表达式进行计算；
+ *   宏在编译之前就被处理掉了，它没有机会参与编译，也不会占用内存。
+ *   而函数是一段可以重复使用的代码，会被编译，会给它分配内存，每次调用函数，就是执行这块内存中的代码。
+ */
+
+
 // 返回给定链表的表头节点
 // T = O(1)
 #define listFirst(l) ((l)->head)
@@ -168,21 +218,22 @@ typedef struct list {
 #define listGetMatchMethod(l) ((l)->match)
 
 /* Prototypes */
-list *listCreate(void);
-void listRelease(list *list);
-list *listAddNodeHead(list *list, void *value);
-list *listAddNodeTail(list *list, void *value);
-list *listInsertNode(list *list, listNode *old_node, void *value, int after);
-void listDelNode(list *list, listNode *node);
-listIter *listGetIterator(list *list, int direction);
-listNode *listNext(listIter *iter);
-void listReleaseIterator(listIter *iter);
-list *listDup(list *orig);
-listNode *listSearchKey(list *list, void *key);
-listNode *listIndex(list *list, long index);
-void listRewind(list *list, listIter *li);
-void listRewindTail(list *list, listIter *li);
-void listRotate(list *list);
+/* 定义了方法的原型 */
+list *listCreate(void);     //创建list列表
+void listRelease(list *list); //列表的释放
+list *listAddNodeHead(list *list, void *value); //添加列表头节点
+list *listAddNodeTail(list *list, void *value); //添加列表尾节点
+list *listInsertNode(list *list, listNode *old_node, void *value, int after); //在某位置上插入节点
+void listDelNode(list *list, listNode *node);  //在列表上删除给定的节点
+listIter *listGetIterator(list *list, int direction); //获取列表给定方向上的迭代器
+listNode *listNext(listIter *iter);                   //花去迭代器内的下一个节点
+void listReleaseIterator(listIter *iter);             //释放列表迭代器
+list *listDup(list *orig);                            //列表的赋值
+listNode *listSearchKey(list *list, void *key);       //关键字搜索具体节点
+listNode *listIndex(list *list, long index);          //下标索引具体的节点
+void listRewind(list *list, listIter *li);            //重置迭代器为方向从头开始
+void listRewindTail(list *list, listIter *li);        //重置迭代器为方向从尾开始
+void listRotate(list *list);                          //类表的旋转操作
 
 /* Directions for iterators
  *
