@@ -153,7 +153,13 @@ typedef struct list {
 
     // 节点值释放函数
     void (*free)(void *ptr);
-
+    /*
+     *    free() 函数用来释放动态分配的内存空间，其原型为：
+     *        void free (void* ptr);  
+     *    free() 可以释放由 malloc()、calloc()、realloc() 分配的内存空间，以便其他程序再次使用。 ptr 为将要释放的内存空间的地址。
+     *    注意：free() 不会改变 ptr 变量本身的值，调用 free() 后它仍然会指向相同的内存空间，但是此时该内存已无效，不能被使用。
+     *    所以建议内存释放完后，将 ptr 的值设置为 NULL
+     */
     // 节点值对比函数
     int (*match)(void *ptr, void *key);
 

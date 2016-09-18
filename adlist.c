@@ -76,6 +76,7 @@ list *listCreate(void)
      */
      
     return list;
+    //创建成功返回链表
 }
 
 /* Free the whole list.
@@ -89,6 +90,8 @@ list *listCreate(void)
 void listRelease(list *list)
 {
     unsigned long len;
+    
+    //定义结构体listNode的指针变量
     listNode *current, *next;
 
     // 指向头指针
@@ -96,14 +99,20 @@ void listRelease(list *list)
     // 遍历整个链表
     len = list->len;
     while(len--) {
+    	  //while循环，依次释放节点
         next = current->next;
 
         // 如果有设置值释放函数，那么调用它
+        // 如果自定义结构体 list有free释放方法定义，则每个节点调用自己内部的value方法(adlist.h 结构体listNode中定义的无类型指针)取得当前节点的值
+        // 并用zfree
+
         if (list->free) list->free(current->value);
 
         // 释放节点结构
+        // 采用redis新定义的zfree方式释放节点(在zmalloc.c中定义)，而不是C自带的free()方法
         zfree(current);
-
+        
+        //内存释放完后，将当前的节点重新赋值为下一节点
         current = next;
     }
 
